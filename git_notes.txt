@@ -1,0 +1,268 @@
+http://mislav.uniqpath.com/2010/07/git-tips/
+http://cheat.errtheblog.com/s/git
+
+
+# Put the current git branch (if applicable) into our prompt
+PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+
+
+# Show remote origin URL:
+git remote show origin
+
+
+# Undo all working dir changes including new files:
+git reset --hard
+git clean -f -x -d (this is dangerous and will delete all untracked files and directories!)
+
+
+# Commit only part of a file (git commit -p works too):
+git add -p <filename>
+    * y - stage this hunk
+    * n - do not stage this hunk
+    * d - do not stage this hunk or any of the later hunks in the file
+    * s - split the current hunk into smaller hunks
+    * e - manually edit the current hunk
+    * ? - print help
+git commit
+
+
+# Show the changes in the cache/index (i.e. staged changes) against the current HEAD. --staged is a synonym for --cached.
+git diff --cached
+
+
+# Split older commits:
+git rebase -i <upstream>
+# Mark the appropriate commits with 'e'
+git reset HEAD^
+git add <relevant changes>
+git commit
+# Repeat last two steps as necessary
+git rebase --continue
+
+
+# Push a specific branch:
+git push origin <branch>
+# Push the checked-out branch:
+git push origin HEAD
+
+
+# Undo previous commit:
+git reset --soft HEAD^      (1)
+<edit>                      (2)
+git add ....                (3)
+git commit -c ORIG_HEAD     (4)
+
+# Or:
+git commit --amend
+
+
+# Rebase or edit the root commit (from 1.7.2 onward):
+git rebase -i --root
+# To edit, make desired changes, add them, and finish the commit with:
+git commit --amend
+
+
+# Rebase to remote repo:
+git pull --rebase <repo> <branch>
+
+
+# Cherry-pick a range of commits in pre-1.7.2:
+# Assume that tag A is the commit on top of which the patch series that you want to select is based and that tag B is the commit of the final patch in the series.
+# Also, assume that br is the name of the current branch and the branch where the new patch series should be applied.
+# Checkout a new temporary branch at the current location
+git checkout -b tmp
+# Move the br branch to the head of the new patchset
+git branch -f br B
+# Rebase the patchset onto tmp, the old location of br
+git rebase --onto tmp A^ br
+
+
+# If you want to see moves in git diff you can supply -M in addition to an option that lists which files have changed, e.g.
+git diff -M
+# git will look at the adjacent trees in the commit history and infer if any files where moved by each commit.
+# To find copies as well as renames you can use the -C option, you can supply it twice to make git look harder for possible copy sources at the expense of some performance.
+git diff -M -C -C
+# To view the log of a file that has been moved/renamed (only works for a single file):
+git log --follow <filepath>
+
+
+# View last stash as a patch:
+git stash show -p
+# View past stash n as a patch:
+git stash show -p stash@{n}
+
+
+# Rename a stash (requires git 1.8.4 or later, works with dirty working directory):
+# https://stackoverflow.com/a/35549615/289099
+git stash drop stash@{1}
+# This prints something like this: Dropped stash@{1} (<hash>)
+git stash store -m "message" <hash>
+
+
+# Compare commit against its parent:
+git diff COMMIT^!
+
+
+# grep through entire git history:
+# http://stackoverflow.com/questions/2928584/how-to-grep-search-committed-code-in-the-git-history
+git grep 'search-string' $(git rev-list --all)
+# grep through remote branches:
+git grep 'search-string' $(git ls-remote . 'refs/remotes/*' | cut -f 2)
+# If you run into an "Argument list too long" error:
+git rev-list --all | xargs git grep expression
+# If you want to limit the search to some subtree (for instance "lib/util") you can pass that to the rev-list subcommand:
+git grep <regexp> $(git rev-list --all -- lib/util)
+
+# Search for differences that change the number of occurrences of a string:
+git log -S <string>
+# Add --pickaxe-regex to search for a regex instead of a string.
+# Look for differences whose patch text contains added/removed lines that match a regex:
+git log -G <regex>
+
+
+# View commits in one branch but not in another:
+git log <branch> ^<excluded_branch> --no-merges
+
+
+# Delete a remote branch (either works):
+git push origin --delete <branchName>
+git push origin :<branchName>
+
+
+# Add a repo to another (as a subtree, including history):
+git remote add <other_repo_nickname> <other_repo_url>
+git fetch <other_repo_nickname>
+git merge -s ours --no-commit <other_repo_nickname>/master
+git read-tree --prefix=<new_subdirectory>/ -u <other_repo_nickname>/master
+git commit
+# You can track upstream changes like so:
+git pull -s subtree <other_repo_nickname> master
+
+
+# Equivalent of 'svn export', only better:
+git archive --format zip --prefix=<dir>/ --output <file>.zip <branch> <repo_dir>/
+
+
+# Display tracked vs. untracked/ignored files in a directory:
+git ls-files
+git ls-files -o
+
+
+# View file at a given revision:
+git show <rev>:<path>
+
+
+# Prune all extraneous git data (makes undoing changes impossible):
+git reflog expire --expire=now --all
+git gc --prune=now
+
+
+# Finding and Purging Big Files From Git History
+# http://naleid.com/blog/2012/01/17/finding-and-purging-big-files-from-git-history
+git verify-pack -v .git/objects/pack/pack-*.idx | egrep "^\w+ blob\W+[0-9]+ [0-9]+ [0-9]+$" | sort -k 3 -n -r > bigobjects.txt
+git gc && git rev-list --objects --all | sort -k 2 > allfileshas.txt
+for SHA in `cut -f 1 -d\  < bigobjects.txt`; do echo $(grep $SHA bigobjects.txt) $(grep $SHA allfileshas.txt) | awk '{print $1,$3,$7}' >> bigtosmall.txt; done;
+
+
+# Undo git filter-branch:
+# http://stackoverflow.com/a/27975288/289099
+for orig_ref in $(git for-each-ref --format="%(refname)" refs/original/); do
+    git update-ref ${orig_ref#refs/original/} $orig_ref
+    git update-ref -d $orig_ref  # to also remove backup refs
+done
+git fetch
+git reset --hard origin/master
+
+
+# Recovering from upstream rebase:
+git rebase --onto <new-parent> <old-parent>
+# For example, if origin/master was rebased, and you have 4 local commits:
+git rebase --onto origin/master HEAD~4
+
+
+# Track and pull all remote branches into local branches:
+# http://stackoverflow.com/a/4754797/289099
+for BRANCH in $(git branch -a | grep remotes | grep -v HEAD | grep -v master); do git branch --track "${BRANCH#remotes/origin/}" "${BRANCH}"; done
+git pull --all
+
+
+# Rename branch locally and remotely:
+# https://gist.github.com/lttlrck/9628955
+# First make sure your local branch has the same commits as the branch in origin!
+git branch -m old_branch new_branch         # Rename branch locally
+git push origin :old_branch                 # Delete the old branch
+git push --set-upstream origin new_branch   # Push the new branch, set local branch to track the new remote
+
+
+# Identify refs (references) contained in a git bundle (either works):
+git bundle verify <bundle>
+git ls-remote <bundle>
+
+
+# Rename branches remotely (without renaming any local branches at the same time):
+git push <remote> <remote>/<old_name>:refs/heads/<new_name> :<old_name>
+
+
+# Remove binaries or other arbitrary files from the entire history of the repo (this is dangerous and requires all users to rebase very carefully!):
+git filter-branch -d /dev/shm/temp.git --index-filter 'git rm -r --cached --ignore-unmatch *.exe *.sdf *.suo *.fig *.lib *.asv *.dll *.obj *.pdb *.mod *.log *.zip *.doc *.pptx *.pdf *.rtf' -- --all
+
+
+# Dealing with line endings:
+# https://help.github.com/articles/dealing-with-line-endings/
+# http://adaptivepatchwork.com/2012/03/01/mind-the-end-of-your-line/
+
+
+# Reset all projects in a repo:
+repo forall -vc "git reset --hard"
+
+
+# View commits to be rebased while resolving conflicts:
+vim .git/rebase-apply/0001
+
+
+# Delete all merged branches:
+# https://stackoverflow.com/questions/6127328/how-can-i-delete-all-git-branches-which-have-been-merged
+git checkout master && git branch --merged | grep -v "\*" | xargs -n 1 git branch -d
+
+
+# List all developers on a project
+# https://stackoverflow.com/questions/9597410/list-all-developers-on-a-project-in-git
+git shortlog --summary --numbered
+# or simply:
+git shortlog -sn
+# To get e-mail addresses as well, add -e
+# To show users from all branches (not only the ones in the current branch) you have to add --all
+
+
+# tig workflow:
+# move between commits with C-n, C-p
+# open interesting commit with Return
+# move inside with j, k, C-u, C-d... (C-n, C-p still work for switching commits)
+# if strong focus is needed, open commit in full screen with O, go back to commit view with q
+
+
+# Open all files changed in HEAD (aliased to git cur):
+vim -p $(git show --name-only --pretty="format:")
+# Also works with diff for current changes (git prev).
+
+
+# Get/view/show a file from a specific revision:
+git show <treeish>:<file>
+
+
+# Push a branch from one remote to another:
+# https://stackoverflow.com/a/7819233/289099
+git push <remote2> <remote1>/<branch>:refs/heads/<branch>
+
+
+# Show lines changed stats:
+# https://stackoverflow.com/questions/2528111/how-can-i-calculate-the-number-of-lines-changed-between-two-commits-in-git/2528129
+git diff --shortstat <commit-ish> <commit-ish>
+git diff --stat <commit-ish> <commit-ish>
+git log --stat <commit1>..<commit2>
+
+
+# List remote tags:
+git ls-remote --tags <remote>
+# Delete remote tag:
+git push --delete <remote> <branch>
