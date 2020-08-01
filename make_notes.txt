@@ -1,0 +1,37 @@
+Print variable in Makefile to stdout:
+$(info $$var is [${var}])
+
+
+# GNU Make symbol shortcuts (automatic variables):
+http://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html
+$@ The file name of the target of the rule.
+$< The name of the first prerequisite.
+$^ The names of all the prerequisites.
+
+
+# Special symbols in reciple lines:
+http://stackoverflow.com/questions/3477292/what-do-and-do-as-prefixes-to-recipe-lines-in-make
+@ suppresses the normal 'echo' of the command that is executed.
+- means ignore the exit status of the command that is executed (normally, a non-zero exit status would stop that part of the build).
++ means 'execute this command under make -n' (when commands are not normally executed).
+
+
+# Variable assignment types:
+http://stackoverflow.com/questions/448910/makefile-variable-assignment
+VARIABLE = value  => (Lazy Set) Normal setting of a variable - values within it are recursively expanded when the variable is used, not when it's declared
+VARIABLE := value => (Immediate Set) Setting of a variable with simple expansion of the values inside - values within it are expanded at declaration time.
+VARIABLE ?= value => (Set If Absent) Setting of a variable only if it doesn't have a value
+VARIABLE += value => (Append) Appending the supplied value to the existing value (or setting to that value if the variable didn't exist)
+
+
+# Preprocessor defined macros:
+http://sourceforge.net/p/predef/wiki/Home/
+http://fortranwiki.org/fortran/show/Predefined+preprocessor+macros
+
+
+# Get preprocessor definitions manually:
+http://stackoverflow.com/questions/9349754/generate-list-of-preprocessor-macros-defined-by-the-compiler/
+gcc -E -dM - < /dev/null
+icc -E -dM - < /dev/null
+gfortran -cpp -E -dM empty.f
+ifort -E -fpp /dev/null -dryrun 2>&1 | grep -e -D | cut -c 5-
