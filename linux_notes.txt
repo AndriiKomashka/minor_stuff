@@ -1,0 +1,426 @@
+# CPU/OS info:
+uname -a
+cat /proc/cpuinfo
+cat /etc/*-release
+
+
+# CPU statistics:
+top <enter> 1 fj <enter> H
+
+
+# /proc/sys/kernel/ documentation:
+https://www.kernel.org/doc/Documentation/sysctl/kernel.txt
+
+
+# Profiling:
+opcontrol --init
+opcontrol --callgraph=10
+opcontrol --start
+opcontrol --stop
+opreport -c | less
+opcontrol --shutdown
+
+
+# Change default terminal:
+Edit the line in /etc/passwd corresponding to the user for which you wish to change the shell. The last field is the login shell for the user.
+
+
+
+# Use screen to support multiple sessions:
+Create new session:
+ctrl-a c
+Switch between sessions:
+ctrl-a "
+Rename session:
+ctrl-a A
+Screen help:
+ctrl-a ?
+Detach:
+ctrl-a d
+Resume detached screen:
+screen -R
+# Attach to an existing screen:
+screen -x
+
+
+# To free pagecache, dentries and inodes:
+echo 3 > /proc/sys/vm/drop_caches
+
+
+# Clear swap space:
+swapoff -a
+swapon -a
+
+
+# Enable core dumping (use -Hc or -Sc to set hard/soft limits; leave off value to query the current value):
+ulimit -c unlimited
+# Print out all shell resource limits:
+ulimit -a
+# Check where dump files are written to (make sure the location is writable by the desired user):
+cat /proc/sys/kernel/core_pattern
+# Open a new shell with a new ulimit set by root:
+sudo su -c "ulimit -u unlimited && exec su $LOGNAME"
+# Check here for ulimit restrictions (as well as .bashrc and .profile):
+/etc/security/limits.conf
+# Check here for setuid programs (0 to disable, 1 to fully enable for debugging, 2 to create dump as root):
+/proc/sys/fs/suid_dumpable
+# Test to see if dumping is working:
+sleep 100 & kill -s SEGV %1
+
+
+RedHat-based systems use the file /etc/sysconfig/network to read the saved hostname at system boot. This is set using the init script /etc/rc.d/rc.sysinit
+Use 'hostname <name>' to change the hostname, or with no argument to print the current hostname.
+Individual interfaces can be manually edited at this location: /etc/sysconfig/network-scripts/ifcfg-*
+
+
+# If gcc emits garbled characters, try one of these:
+unset LANG
+export LANG=en-US.utf-8
+
+
+# Remove duplicates from a file without sorting:
+awk '!x[$0]++'
+
+
+# Suspend running (foreground) job:
+ctrl+z
+# Place suspended job in background:
+bg (%<n>)
+# Place bg/stopped job in foreground.
+fg (%<n>)
+# List all backgrounded processes:
+jobs
+# Detach job from terminal:
+https://serverfault.com/questions/24425/can-i-nohup-screen-an-already-started-process
+disown %n
+
+
+# Problems installing packages (Debian/Ubuntu):
+sudo apt-get install -f
+sudo dpkg --configure -a
+sudo apt-get update
+
+
+# Unload a driver:
+rmmod <driver>
+# Determine driver dependencies:
+depmod -aq
+# Load a driver (after proper installation):
+modprobe <driver>
+
+
+# SSH to multiple ports on the same host without warnings:
+$ ssh host.example.com
+Accept the fingerprint. This saves into the standard .ssh/known_hosts file.
+Logout of the server and ssh back with a new port and temporary known_hosts file:
+$ ssh -o "UserKnownHostsFile kh2" host.example.com -p 2222
+A new fingerprint prompt should appear. Accept it. Logout and copy the new fingerprint to the existing known_hosts file:
+$ cat kh2 >> .ssh/known_hosts && rm kh2
+
+
+# Use gctags recursively on machines that use -R for deactivating regex instead of recursion:
+find . -type f | xargs gctags
+
+
+# Delete empty folders:
+find <path> -empty -type d -delete
+
+
+# Check which man sections are available:
+whatis <topic>
+# Search manpages for a keyword:
+apropos <keyword>
+# Locate relevant files for a command:
+whereis <command>
+
+
+# Test and check if blank:
+if [ "${i:-0}" -ge 2 ] ; then ...
+
+
+# Check DWARF version of a binary:
+readelf --debug-dump=info binary_name | grep -A 2 'Compilation Unit @'
+
+
+# Count files in directory and subdirectories:
+find . -type f | wc -l
+
+
+# Shell scripting assign default if not set:
+FOO=${VARIABLE:-default}
+# Assign to VARIABLE as well:
+FOO=${VARIABLE:=default}
+
+
+# Bash commandline editing (using readline):
+http://www.math.utah.edu/docs/info/features_7.html
+ctrl-a  Move to start of line
+ctrl-e  Move to end of line
+alt-f   Move to next word
+alt-b   Move to previous word
+ctrl-f  Move forward one character
+ctrl-b  Move back on character
+ctrl-u  Delete to start of line
+ctrl-k  Delete to end of line
+ctrl-w  Delete to start of word
+alt-d   Delete to end of word
+ctrl-d  Delete character under cursor (if no text in line, sends EOF/logout)
+ctrl-h  Backspace
+ctrl-y  Paste last deleted text
+ctrl-p  Move back through history
+ctrl-n  Move forward through history
+ctrl-r  Search back through history
+ctrl-s  Search forward through history
+ctrl-l  Clear screen; leave current line intact
+
+
+# Some Valgrind notes:
+  $ valgrind --leak-check=full --db-attach=yes --track-fds=yes --log-socket=<my-ip-address> <program>
+
+This tells valgrind that I have started valgrind-listener in another terminal,
+so all valgrind related output should go there.  This makes sure that valgrind
+output isn't confused with program output. It also tells valgrind to ask me
+whether I want to use GDB to look at any errors that occur.
+
+ * --db-attach is now deprecated and will be removed in the next
+  valgrind feature release.  The built-in GDB server capabilities are
+  superior and should be used instead. Learn more here:
+  http://valgrind.org/docs/manual/manual-core-adv.html#manual-core-adv.gdbserver
+
+Valgrind as profiler:
+  $ valgrind --tool=callgrind --cache-sim=yes --branch-sim=yes --dump-instr=yes --collect-jumps=yes <program>
+  $ kcachgrind
+
+Track origins of unintialized values:
+valgrind --track-origins=yes
+
+
+# Find + grep:
+find . -type f -exec grep -Hn 'something' {} +
+
+
+# Grep for a tab character:
+grep $'\t'
+
+
+# Access a server with ssh with a non-default port or user name:
+Add an alias to ~/.ssh/config like so:
+Host <alias>
+  HostName <server>
+  Port <port>
+  User <username>
+  IdentityFile ~/.ssh/id_rsa (or such; optional)
+
+
+# Check progress of a dd:
+dd if=/dev/sdb of=/image.img &
+kill -SIGUSR1 %1 [or PID]
+
+
+# LD_LIBRARY_PATH not respected due to RPATH issues:
+
+Use ldd to check what dynamic libraries are used for a given executable.
+If that isn't what is expected, try 'LD_DEBUG=all ldd <binary>'.
+
+Shared libraries are found by searching the following paths:
+1. The RPATH dynamic section attribute of the binary if present and RUNPATH attribute does not exist.
+2. The environment variable LD_LIBRARY_PATH. If the executable is a set-user-ID/set-group-ID binary, this is ignored.
+3. The RUNPATH dynamic section attribute of the binary if present.
+4. The cache file /etc/ld.so.cache which contains a compiled list of candidate libraries previously found in the augmented library path. If, however, the  binary was linked with -z nodeflib linker option, libraries in the default library paths are skipped.
+5. The default path /lib, and then /usr/lib. If the binary was linked with -z nodeflib linker option, this step is skipped.
+
+To check if RPATH is set, try this:
+readelf -a <binary> | grep RPATH
+
+To force setting (or not setting) the RPATH, set (or unset) the LD_RUN_PATH environment variable.
+
+
+# Sticky bit, setuid, and setgid:
+https://en.wikipedia.org/wiki/Sticky_bit
+https://en.wikipedia.org/wiki/Setuid
+When a directory's sticky bit is set, the filesystem treats the files in such directories in a special way so only the file's owner, the directory's owner, or root user can rename or delete the file. Without the sticky bit set, any user with write and execute permissions for the directory can rename or delete contained files, regardless of the file's owner. The Linux kernel ignores the sticky bit on files.
+In Unix symbolic file system permission notation, the sticky bit is represented by the letter t in the final character-place.
+If the sticky-bit is set on a file or directory without the execution bit set for the others category (non-user-owner and non-group-owner), it is indicated with a capital T.
+The sticky bit can be set using the chmod command and can be set using its octal mode 1000 or by its symbol t.
+setuid and setgid (short for "set user ID upon execution" and "set group ID upon execution", respectively) are Unix access rights flags that allow users to run an executable with the permissions of the executable's owner or group respectively.
+Setting the setgid permission on a directory ("chmod g+s") causes new files and subdirectories created within it to inherit its group ID, rather than the primary group ID of the user who created the file (the owner ID is never affected, only the group ID). Newly created subdirectories inherit the setgid bit. 
+The setuid and setgid bits are normally set with the command chmod by setting the high-order octal digit to 4 for setuid or 2 for setgid (or chmod ug+s).
+
+
+# Remove executable bit recursively on all files, excepting directories, and only if the bit is set:
+http://superuser.com/questions/234647/how-to-remove-executable-bit-recursively-from-files-not-directories
+find . -type f -perm +111 -exec chmod -x {} \;
+If that doesn't work, try searching with:
+find . -type f -perm -g=w
+
+
+# Bash 'strict mode' (i.e. #!/bin/bash or set -euo pipefail):
+http://redsymbol.net/articles/unofficial-bash-strict-mode/
+
+
+# Find largest files:
+find . -xdev -type f -exec du -sh {} ';' | sort -rn | head -n50
+
+
+# Find all extensions (file suffixes) in a given directory:
+find . -type f | perl -ne 'print $1 if m/\.([^.\/]+)$/' | sort -u
+
+
+# Find all hidden files and directories (recursively, ignored non-hidden files in hidden directories):
+find . -name '.*' 
+
+
+# Fix image metadata (remove unsafe EXIF tags):
+exiftool -all= -tagsfromfile @ -all:all -unsafe <file>
+
+# Fix image metadata dates:
+exiftool "-AllDates=YYYY:MM:DD HH:MM:SS" <file>
+
+# Reset video modified date to the create data (after running the above):
+exiftool "-FileModifyDate<QuickTime:CreateDate" <file>
+
+
+# Generate a flac fingerprint file:
+metaflac --show-md5sum *.flac > fingerprints.ffp
+
+# Compare a flac fingerprint file (either should work):
+cmp fingerprints.ffp <(metaflac --show-md5sum *.flac)
+metaflac --show-md5sum *.flac | cmp fingerprints.ffp
+
+
+# Find all the files a package installed onto your system:
+https://askubuntu.com/questions/32507/how-do-i-get-a-list-of-installed-files-from-a-package/
+dpkg-query -L <package_name>
+# Find the files a .deb file will install:
+dpkg-deb -c <package_name.deb>
+
+
+# List all the files inside an rpm package:
+rpm -qlp <file.rpm>
+
+
+# Replace or add a prefix to multiple files (use -n to preview):
+rename 's/^old/new' <files>
+
+
+# Reduce size/quality of a pdf:
+gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -sOutputFile=output.pdf <input.pdf>
+Can also try other options for dPDFSETTINGS such as screen and default, or adding -r150 for pixel count, but those options are usually less ideal.
+
+# Extract/remove pages from a pdf:
+https://askubuntu.com/questions/221962/how-can-i-extract-a-page-range-a-part-of-a-pdf
+pdftk input.pdf cat 1-10 12 output output.pdf
+
+
+# Set terminal title:
+https://askubuntu.com/questions/22413/how-to-change-gnome-terminal-title
+echo -ne "\033]0;SOME TITLE HERE\007"
+Using a script:
+termtitle.sh "some title here"
+In .bashrc:
+PROMPT_COMMAND='echo -ne "\033]0;SOME TITLE HERE\007"'
+
+
+# Add entries to /etc/resolv.conf in Ubuntu 17.04+:
+https://askubuntu.com/a/51332/173694
+Add them to /etc/resolvconf/resolv.conf.d/head (or tail), then:
+sudo resolvconf -u
+
+
+# Map local network and find servers with port 22 open:
+nmap -p 22 --open -sV 192.168.1.1/24
+
+
+# Wireless control:
+nmcli
+nm-applet
+
+
+# Gnome settings/controls:
+gnome-control-center
+# If using an environment other than gnome or unity:
+env XDG_CURRENT_DESKTOP=GNOME gnome-control-center
+
+
+# Reuse output of last command:
+$(!!)
+# For example, use output of grep to open the files in vim:
+grep <pattern> -rI <files>
+vim -p $(!! -l)
+
+
+# Add third monitor:
+xrandr --output DP-1-4 --auto && xrandr --output DP-1-4 --right-of HDMI-1
+# Add second monitor for standup:
+xrandr --output DP-2 --auto && xrandr --output DP-2 --right-of eDP-1
+# Fix mouse after re-docking:
+sudo rmmod usbhid && sudo modprobe usbhid
+# Set brightness:
+xrandr --output eDP-1 --brightness .1
+# Fix second/third monitor after re-docking (maybe):
+xrandr --auto && xrandr --output HDMI-1 --right-of eDP-1 && xrandr --output DP-1-4 --auto && xrandr --output DP-1-4 --right-of HDMI-1
+
+
+# Virtualbox control:
+https://askubuntu.com/questions/457329/shutting-down-all-virtualbox-vagrant-vms-in-one-easy-to-use-bash-command-that
+# List running machines (returns name and UUID):
+VBoxManage list runningvms
+# Stop running VMs by "hibernating" them (reommended to avoid data loss):
+VBoxManage controlvm <name|uuid> savestate
+# Poweroff running VMs (not recommended because we may lose data in the guest):
+VBoxManage controlvm <name|uuid> poweroff
+# Use ACPI in an ACPI-aware guest OS (preferable to poweroff for graceful shutdown of guests):
+VBoxManage controlvm <name|uuid> acpipowerbutton
+
+
+# Create new key with separate signing and encryption subkeys:
+https://blog.tinned-software.net/create-gnupg-key-with-sub-keys-to-sign-encrypt-authenticate/
+# Rotate, revoke, cross-sign, etc. gpg keys:
+https://sungo.wtf/2016/11/23/gpg-strong-keys-rotation-and-keybase.html
+
+# Renew a gpg key:
+https://unix.stackexchange.com/questions/177291/how-to-renew-an-expired-keypair-with-gpg
+gpg --edit-key 0x12345678
+gpg> key 1
+gpg> expire
+...
+gpg> key 1
+gpg> key 2
+gpg> expire
+...
+gpg> save
+
+# Send a gpg key to several keyservers:
+for ks in keys.gnupg.net pool.sks-keyservers.net keyserver.ubuntu.com pgp.mit.edu; do gpg --keyserver $ks --send-key <keyid>; done
+
+
+# Unicode characters and their compose key combinations:
+/usr/share/X11/locale/en_US.UTF-8/Compose
+
+
+# Redirect stdout and stderr (use >> for append):
+command &> logfile
+command > logfile 2>&1
+
+
+# Generate XKCD-style memorable passwords:
+shuf -n5 /usr/share/dict/words | tr '\n' ' ' && echo
+
+
+# `systemctl --user status` fails with "Failed to connect to bus: No such file or directory":
+# https://bbs.archlinux.org/viewtopic.php?id=234813
+export XDG_RUNTIME_DIR=/run/user/$UID
+
+
+# Wifi password storage:
+/etc/NetworkManager/system-connections/
+
+
+# Permission denied despite 777:
+https://unix.stackexchange.com/questions/203371/run-script-sh-vs-bash-script-sh-permission-denied
+It's probably because the drive is mounted as noexec. May need to explicitly remount with `-o exec`. Use `mount` to confirm.
+
+
+# Generate sorted name/size list of a tarball:
+# https://stackoverflow.com/questions/1030545/how-to-compare-two-tarballs-content
+tar tvfj <tarball> | awk '{printf "%10s %s\n",$3,$6}' | sort -k 2
