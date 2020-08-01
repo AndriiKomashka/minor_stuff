@@ -1,0 +1,89 @@
+Show backtrace of all threads:
+thread apply all backtrace (thr ap al bt)
+
+
+Attach to running program:
+gdb --pid=`pgrep <program>`
+
+
+Attach to core dump:
+gdb <program> <dump_dir>/`ls -t <dump_dir>/ | head -n 1`
+
+
+Prevent gdb from jumping threads:
+handle SIGPIPE nostop noprint pass
+
+
+Step instruction:
+si
+Display instruction:
+x/i $pc
+Show registers:
+Ctrl-X, Ctrl-2
+
+
+Use the x command to examine memory:
+x/nfu addr
+x addr
+x
+
+n, f, and u are all optional parameters that specify how much memory to display and how to format it; addr is an expression giving the address where you want to start displaying memory. If you use defaults for nfu, you need not type the slash `/'. Several commands set convenient defaults for addr.
+
+n, the repeat count is a decimal integer; the default is 1. It specifies how much memory (counting by units u) to display.
+
+f, the display format is one of the formats used by print, `s' (null-terminated string), or `i' (machine instruction). The default is `x' (hexadecimal) initially. The default changes each time you use either x or print.
+
+u, the unit size is any of
+    b Bytes.
+    h Halfwords (two bytes).
+    w Words (four bytes). This is the initial default.
+    g Giant words (eight bytes).
+
+Each time you specify a unit size with x, that size becomes the default unit the next time you use x. (For the `s' and `i' formats, the unit size is ignored and is normally not written.)
+
+
+Show code:
+Ctrl-X, Ctrl-A
+Switch highlighted view:
+focus next
+This seems to do both things:
+Ctrl-X, O
+
+
+List breakpoints:
+i b
+
+Save breakpoints:
+https://stackoverflow.com/questions/501486/getting-gdb-to-save-a-list-of-breakpoints
+save breakpoints <filename>
+
+Load breakpoints:
+source <filename>
+
+
+Load symbol table from an executable file (sometimes necessary for remote debugging if the symbol table can't be found):
+symbol-file <file>
+
+
+Running with docker and getting "warning: Error disabling address space randomization: Operation not permitted":
+https://stackoverflow.com/questions/35860527/warning-error-disabling-address-space-randomization-operation-not-permitted
+docker run --cap-add=SYS_PTRACE --security-opt seccomp=unconfined
+
+
+Print vtable (try increasing 10 if not enough functions are found):
+https://stackoverflow.com/questions/6191678/print-c-vtables-using-gdb
+p /a (*(void ***)obj)[0]@10
+
+Also try:
+info vtbl this
+
+
+Checkpoints (bookmark, snapshot, etc.):
+checkpoint - Save a snapshot of the debugged program’s current execution state. The checkpoint command takes no arguments, but each checkpoint is assigned a small integer id, similar to a breakpoint id.
+info checkpoints - List the checkpoints that have been saved in the current debugging session.
+restart checkpoint-id - Restore the program state that was saved as checkpoint number checkpoint-id. All program variables, registers, stack frames etc. will be returned to the values that they had when the checkpoint was saved. In essence, gdb will “wind back the clock” to the point in time when the checkpoint was saved.
+
+
+Print full string:
+https://stackoverflow.com/questions/233328/how-do-i-print-the-full-value-of-a-long-string-in-gdb
+set print elements 0
