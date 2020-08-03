@@ -14,6 +14,18 @@ git remote show origin
 git reset --hard
 git clean -f -x -d (this is dangerous and will delete all untracked files and directories!)
 
+# Setting your branch to exactly match the remote branch:
+git fetch origin
+git reset --hard origin/master
+
+# Delete a remote branch (either works):
+git push origin --delete <branchName>
+git push origin :<branchName>
+
+# Delete all merged branches:
+# https://stackoverflow.com/questions/6127328/how-can-i-delete-all-git-branches-which-have-been-merged
+git checkout master && git branch --merged | grep -v "\*" | xargs -n 1 git branch -d
+
 
 # Commit only part of a file (git commit -p works too):
 git add -p <filename>
@@ -124,11 +136,6 @@ git log -G <regex>
 git log <branch> ^<excluded_branch> --no-merges
 
 
-# Delete a remote branch (either works):
-git push origin --delete <branchName>
-git push origin :<branchName>
-
-
 # Add a repo to another (as a subtree, including history):
 git remote add <other_repo_nickname> <other_repo_url>
 git fetch <other_repo_nickname>
@@ -220,11 +227,6 @@ repo forall -vc "git reset --hard"
 vim .git/rebase-apply/0001
 
 
-# Delete all merged branches:
-# https://stackoverflow.com/questions/6127328/how-can-i-delete-all-git-branches-which-have-been-merged
-git checkout master && git branch --merged | grep -v "\*" | xargs -n 1 git branch -d
-
-
 # List all developers on a project
 # https://stackoverflow.com/questions/9597410/list-all-developers-on-a-project-in-git
 git shortlog --summary --numbered
@@ -232,13 +234,6 @@ git shortlog --summary --numbered
 git shortlog -sn
 # To get e-mail addresses as well, add -e
 # To show users from all branches (not only the ones in the current branch) you have to add --all
-
-
-# tig workflow:
-# move between commits with C-n, C-p
-# open interesting commit with Return
-# move inside with j, k, C-u, C-d... (C-n, C-p still work for switching commits)
-# if strong focus is needed, open commit in full screen with O, go back to commit view with q
 
 
 # Open all files changed in HEAD (aliased to git cur):
