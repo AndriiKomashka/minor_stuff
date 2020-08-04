@@ -261,3 +261,7 @@ git log --stat <commit1>..<commit2>
 git ls-remote --tags <remote>
 # Delete remote tag:
 git push --delete <remote> <branch>
+
+
+# Spawn an external diffviewer with a directory diff as input
+git difftool --dir-diff
