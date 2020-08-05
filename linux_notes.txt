@@ -424,3 +424,9 @@ It's probably because the drive is mounted as noexec. May need to explicitly rem
 # Generate sorted name/size list of a tarball:
 # https://stackoverflow.com/questions/1030545/how-to-compare-two-tarballs-content
 tar tvfj <tarball> | awk '{printf "%10s %s\n",$3,$6}' | sort -k 2
+
+
+# Recording sound/ microphone mixer setup
+alsamixer
+sudo arecord -f S16_LE -d 10 -r 44100 -c 2 --device="hw:0,0" /tmp/test-mic.wav
+aplay /tmp/test-mic.wav
