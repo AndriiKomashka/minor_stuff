@@ -18,6 +18,8 @@ git clean -f -x -d (this is dangerous and will delete all untracked files and di
 git fetch origin
 git reset --hard origin/master
 
+# Delete a local branch
+git branch -d localBranchName
 # Delete a remote branch (either works):
 git push origin --delete <branchName>
 git push origin :<branchName>
